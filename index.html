@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="面向高校学生的企业岗位能力画像：对比华为与米哈游代表岗位，映射课程、竞赛、项目与职业发展路径。" />
+    <meta name="theme-color" content="#f4f6f8" />
+    <title>职能图谱 | 企业岗位能力画像</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script defer src="./app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">跳到主要内容</a>
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="职能图谱首页">
+        <span class="brand-mark" aria-hidden="true">职</span>
+        <span>职能图谱</span>
+      </a>
+      <nav aria-label="主导航">
+        <a href="#profiles">岗位画像</a>
+        <a href="#matrix">能力矩阵</a>
+        <a href="#pathway">成长路径</a>
+        <a href="#method">研究说明</a>
+      </nav>
+      <button class="header-action" id="printPage" type="button">导出 / 打印</button>
+    </header>
+
+    <main id="main">
+      <section class="hero" id="top">
+        <div class="hero-copy">
+          <p class="eyebrow">企业岗位能力研究 · 2026</p>
+          <h1>把岗位要求，翻译成<br /><em>可行动的成长路径</em></h1>
+          <p class="hero-lead">从企业公开招聘需求出发，将岗位能力拆成知识、技术、工程、业务与协作证据，帮助学生知道下一门课、下一场竞赛和下一个项目该怎么选。</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#profiles">探索岗位画像</a>
+            <a class="button secondary" href="#matrix">查看能力矩阵</a>
+          </div>
+        </div>
+        <div class="hero-visual" aria-label="当前研究覆盖情况">
+          <div class="hero-number"><strong>06</strong><span>代表岗位</span></div>
+          <div class="hero-number"><strong>08</strong><span>能力维度</span></div>
+          <div class="hero-number"><strong>04</strong><span>成长映射</span></div>
+          <div class="orbit-label">岗位 · 能力 · 证据</div>
+        </div>
+      </section>
+
+      <section class="scope-strip" aria-label="研究范围">
+        <p>本期研究企业</p>
+        <div class="company-wordmark"><span>HUAWEI</span><small>ICT 与智能终端</small></div>
+        <div class="company-wordmark"><span>miHoYo</span><small>游戏与数字内容</small></div>
+        <p class="scope-note">基于公开招聘信息归纳 · 非企业官方评价</p>
+      </section>
+
+      <section class="section profiles-section" id="profiles">
+        <div class="section-heading">
+          <p class="eyebrow">岗位画像</p>
+          <h2>六条不同的技术成长曲线</h2>
+          <p>选择企业与岗位，查看目标能力、学习资源和可验证的成果建议。</p>
+        </div>
+
+        <div class="filter-row" role="group" aria-label="岗位筛选">
+          <div class="segmented" id="companyFilters"></div>
+          <label class="search-box">
+            <span class="sr-only">搜索岗位或技能</span>
+            <input id="roleSearch" type="search" placeholder="搜索岗位、语言或能力" autocomplete="off" />
+          </label>
+        </div>
+
+        <div class="profile-layout">
+          <div class="role-list" id="roleList" aria-label="岗位列表"></div>
+          <article class="profile-detail" id="profileDetail" aria-live="polite"></article>
+        </div>
+        <div class="empty-state" id="emptyState" hidden>
+          <strong>没有匹配的岗位</strong>
+          <p>试试“C++”“算法”或清除企业筛选。</p>
+          <button class="button secondary" id="resetFilters" type="button">重置筛选</button>
+        </div>
+      </section>
+
+      <section class="section matrix-section" id="matrix">
+        <div class="section-heading">
+          <p class="eyebrow">能力矩阵</p>
+          <h2>同一把尺子，看清岗位差异</h2>
+          <p>分值表示该能力在岗位中的相对重要度：1 为了解，5 为能独立解决复杂问题。</p>
+        </div>
+        <div class="matrix-controls">
+          <div class="legend" aria-label="能力等级图例"><span>基础</span><i></i><i></i><i></i><i></i><i></i><span>关键</span></div>
+          <button class="text-button" id="sortMatrix" type="button">按综合要求排序</button>
+        </div>
+        <div class="matrix-wrap" tabindex="0" aria-label="岗位能力矩阵，可横向滚动">
+          <table id="matrixTable"></table>
+        </div>
+        <p class="matrix-footnote">提示：画像用于学习规划，不代表录用门槛。企业、团队与具体职位的要求会随业务变化。</p>
+      </section>
+
+      <section class="section pathway-section" id="pathway">
+        <div class="pathway-intro">
+          <p class="eyebrow">成长路径</p>
+          <h2>让每一段学习经历，都成为能力证据</h2>
+          <p>从基础学习到求职表达，重点不是“参加过”，而是能解释你解决了什么问题、做了什么取舍、结果如何验证。</p>
+        </div>
+        <ol class="pathway-list">
+          <li><span>01</span><div><h3>构建基础</h3><p>数据结构、操作系统、计算机网络、数学基础与至少一门主力语言。</p></div><strong>大一至大二</strong></li>
+          <li><span>02</span><div><h3>形成专长</h3><p>根据目标岗位选修 AI、图形学、嵌入式、分布式系统或游戏引擎课程。</p></div><strong>大二至大三</strong></li>
+          <li><span>03</span><div><h3>完成实战</h3><p>用竞赛和团队项目构建可运行、可测量、可复盘的作品集。</p></div><strong>大三</strong></li>
+          <li><span>04</span><div><h3>面向岗位表达</h3><p>围绕目标岗位重写简历，用架构图、指标、代码与复盘证明能力。</p></div><strong>大三至大四</strong></li>
+        </ol>
+      </section>
+
+      <section class="section method-section" id="method">
+        <div class="method-card">
+          <div>
+            <p class="eyebrow">研究说明</p>
+            <h2>从招聘文本到能力画像</h2>
+          </div>
+          <div class="method-copy">
+            <p>我们对企业公开招聘页中的岗位职责、技能要求和优先条件进行语义归类，再映射到高校可获得的课程、竞赛和项目经历。能力分值是研究团队的结构化判断，不是企业给出的评分。</p>
+            <div class="method-links">
+              <a href="https://career.huawei.com/" target="_blank" rel="noreferrer">华为招聘官网 <span aria-hidden="true">↗</span></a>
+              <a href="https://join.mihoyo.com/" target="_blank" rel="noreferrer">米哈游招聘官网 <span aria-hidden="true">↗</span></a>
+            </div>
+            <p class="updated">资料核验：2026 年 7 月 · 建议求职前再次查看企业官网</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div><strong>职能图谱</strong><p>“初心启智，数创未来”暑期研学实践成果</p></div>
+      <p>面向学习规划的研究型工具</p>
+    </footer>
+    <noscript><div class="noscript">此页面需要启用 JavaScript 才能浏览岗位画像与能力矩阵。</div></noscript>
+  </body>
+</html>
