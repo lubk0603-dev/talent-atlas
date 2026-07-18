@@ -3,9 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="面向高校学生的企业岗位能力画像：对比立芯科技、上海超级计算中心与米哈游代表岗位，映射课程、竞赛、项目与职业发展路径。" />
+    <meta name="description" content="面向高校学生的企业岗位能力画像与简历工坊：映射课程、竞赛、项目和职业路径，并支持接入自有 AI 生成岗位定制简历。" />
     <meta name="theme-color" content="#f4f6f8" />
-    <title>职能图谱 | 企业岗位能力画像</title>
+    <title>职能图谱 | 岗位画像与简历工坊</title>
     <link rel="stylesheet" href="./styles.css" />
     <script defer src="./app.js"></script>
   </head>
@@ -20,6 +20,7 @@
         <a href="#profiles">岗位画像</a>
         <a href="#matrix">能力矩阵</a>
         <a href="#pathway">成长路径</a>
+        <a href="#resume">简历工坊</a>
         <a href="#method">研究说明</a>
       </nav>
       <button class="header-action" id="printPage" type="button">导出 / 打印</button>
@@ -28,20 +29,36 @@
     <main id="main">
       <section class="hero" id="top">
         <div class="hero-copy">
-          <p class="eyebrow">企业岗位能力研究 · 2026</p>
-          <h1>把岗位要求，翻译成<br /><em>可行动的成长路径</em></h1>
-          <p class="hero-lead">从企业公开招聘需求出发，将岗位能力拆成知识、技术、工程、业务与协作证据，帮助学生知道下一门课、下一场竞赛和下一个项目该怎么选。</p>
+          <p class="eyebrow">高校学生求职规划工具</p>
+          <h1>职能图谱<em>岗位能力与简历助手</em></h1>
+          <p class="hero-lead">看懂企业岗位，规划学习路径，并用真实经历生成可投递简历。</p>
           <div class="hero-actions">
-            <a class="button primary" href="#profiles">探索岗位画像</a>
-            <a class="button secondary" href="#matrix">查看能力矩阵</a>
+            <a class="button primary" href="#profiles">查看岗位画像</a>
+            <a class="button secondary" href="#resume">生成我的简历</a>
           </div>
         </div>
-        <div class="hero-visual" aria-label="当前研究覆盖情况">
-          <div class="hero-number"><strong>07</strong><span>代表岗位</span></div>
-          <div class="hero-number"><strong>08</strong><span>能力维度</span></div>
-          <div class="hero-number"><strong>04</strong><span>成长映射</span></div>
-          <div class="orbit-label">岗位 · 能力 · 证据</div>
-        </div>
+        <figure class="hero-workflow" aria-labelledby="workflowTitle">
+          <figcaption>
+            <strong id="workflowTitle">从岗位到简历</strong>
+            <span>信息会按照这条路径整理</span>
+          </figcaption>
+          <div class="workflow-list">
+            <div class="workflow-item">
+              <span class="workflow-label">岗位要求</span>
+              <div><strong>看懂企业需要什么</strong><p>岗位职责、技能关键词、优先条件</p></div>
+            </div>
+            <span class="workflow-arrow" aria-hidden="true">↓</span>
+            <div class="workflow-item">
+              <span class="workflow-label">能力证据</span>
+              <div><strong>找到你能证明的经历</strong><p>课程学习、项目实践、竞赛成果</p></div>
+            </div>
+            <span class="workflow-arrow" aria-hidden="true">↓</span>
+            <div class="workflow-item workflow-result">
+              <span class="workflow-label">投递简历</span>
+              <div><strong>整理成岗位定制简历</strong><p>真实表达、一页预览、直接导出</p></div>
+            </div>
+          </div>
+        </figure>
       </section>
 
       <section class="scope-strip" aria-label="研究范围">
@@ -55,7 +72,7 @@
       <section class="section profiles-section" id="profiles">
         <div class="section-heading">
           <p class="eyebrow">岗位画像</p>
-          <h2>六条不同的技术成长曲线</h2>
+          <h2>七条不同的技术成长曲线</h2>
           <p>选择企业与岗位，查看目标能力、学习资源和可验证的成果建议。</p>
         </div>
 
@@ -106,6 +123,163 @@
           <li><span>03</span><div><h3>完成实战</h3><p>用竞赛和团队项目构建可运行、可测量、可复盘的作品集。</p></div><strong>大三</strong></li>
           <li><span>04</span><div><h3>面向岗位表达</h3><p>围绕目标岗位重写简历，用架构图、指标、代码与复盘证明能力。</p></div><strong>大三至大四</strong></li>
         </ol>
+      </section>
+
+      <section class="section resume-section" id="resume">
+        <div class="section-heading resume-heading">
+          <h2>把能力证据，整理成一页可投递简历</h2>
+          <p>选择表达模板，填写真实经历，再用你自己的 AI 接口生成岗位定制版本。信息只会发送到你配置的服务。</p>
+        </div>
+
+        <div class="sample-resume-callout">
+          <div><strong>第一次写简历，不知道从哪里开始？</strong><span>先查看一份技术岗位学生简历范例，参考信息顺序和项目写法。</span></div>
+          <button class="button secondary" id="loadSampleResume" type="button">查看范例简历</button>
+        </div>
+
+        <div class="template-picker" role="radiogroup" aria-label="简历模板">
+          <button class="template-option active" type="button" data-template="technical" role="radio" aria-checked="true">
+            <span class="template-preview technical-preview" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+            <span><strong>技术标准</strong><small>技能与项目并重，适合研发岗位</small></span>
+          </button>
+          <button class="template-option" type="button" data-template="project" role="radio" aria-checked="false">
+            <span class="template-preview project-preview" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+            <span><strong>项目优先</strong><small>突出成果指标，适合经验型投递</small></span>
+          </button>
+          <button class="template-option" type="button" data-template="campus" role="radio" aria-checked="false">
+            <span class="template-preview campus-preview" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+            <span><strong>校园成长</strong><small>强化课程、竞赛与潜力表达</small></span>
+          </button>
+        </div>
+
+        <div class="resume-workbench">
+          <div class="resume-builder">
+            <details class="ai-config" open>
+              <summary>
+                <span><strong>接入你的 AI</strong><small>支持 OpenAI 兼容的 Chat Completions 接口</small></span>
+                <span class="config-state" id="configState">待配置</span>
+              </summary>
+              <div class="config-grid">
+                <label class="field">
+                  <span>AI 服务商</span>
+                  <select id="aiProvider" aria-describedby="providerHint">
+                    <optgroup label="国际服务">
+                      <option value="openai">OpenAI</option>
+                      <option value="gemini">Google Gemini</option>
+                    </optgroup>
+                    <optgroup label="国内服务">
+                      <option value="deepseek">DeepSeek</option>
+                      <option value="qwen">阿里云百炼 · 通义千问</option>
+                      <option value="kimi">Kimi 开放平台</option>
+                      <option value="zhipu">智谱 AI · GLM</option>
+                    </optgroup>
+                    <option value="custom">自定义兼容服务</option>
+                  </select>
+                  <small id="providerHint">选择后会自动填写常用接口地址。</small>
+                </label>
+                <label class="field">
+                  <span>模型</span>
+                  <select id="aiModel" aria-describedby="modelHint"></select>
+                  <input id="customModel" type="text" placeholder="输入服务商提供的模型 ID" autocomplete="off" spellcheck="false" hidden />
+                  <small id="modelHint">优先选择轻量模型，生成简历通常更快。</small>
+                </label>
+                <label class="field span-2">
+                  <span>接口地址</span>
+                  <input id="aiEndpoint" type="url" value="https://api.openai.com/v1" placeholder="https://api.example.com/v1" autocomplete="url" />
+                  <small>可手动修改为代理或私有网关地址，系统会自动补充 /chat/completions。</small>
+                </label>
+                <label class="field span-2">
+                  <span>API 密钥</span>
+                  <input id="aiKey" type="password" placeholder="仅本次页面使用" autocomplete="off" spellcheck="false" />
+                </label>
+              </div>
+              <p class="privacy-note">密钥不会保存在浏览器存储中。浏览器直连接口还需要服务商允许跨域请求，正式部署建议通过服务端代理保护密钥。</p>
+            </details>
+
+            <form id="resumeForm" novalidate>
+              <div class="form-section">
+                <div class="form-section-title"><strong>投递目标</strong><span>AI 会据此调整关键词和内容顺序</span></div>
+                <div class="form-grid">
+                  <label class="field">
+                    <span>目标岗位</span>
+                    <select id="targetRole" name="targetRole" required></select>
+                  </label>
+                  <label class="field">
+                    <span>目标公司</span>
+                    <input id="targetCompany" name="targetCompany" type="text" placeholder="例如：立芯科技" />
+                  </label>
+                  <label class="field span-2">
+                    <span>岗位描述</span>
+                    <textarea id="jobDescription" name="jobDescription" rows="3" placeholder="可粘贴招聘要求，AI 会优先匹配其中的真实关键词"></textarea>
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-section">
+                <div class="form-section-title"><strong>基本信息</strong><span>请使用真实、可核验的内容</span></div>
+                <div class="form-grid">
+                  <label class="field">
+                    <span>姓名</span>
+                    <input id="candidateName" name="candidateName" type="text" required placeholder="你的姓名" autocomplete="name" />
+                  </label>
+                  <label class="field">
+                    <span>联系方式</span>
+                    <input id="contact" name="contact" type="text" required placeholder="手机 / 邮箱 / 作品集" autocomplete="email" />
+                  </label>
+                  <label class="field span-2">
+                    <span>教育经历</span>
+                    <textarea id="education" name="education" rows="3" required placeholder="学校、专业、学历、时间、核心课程或成绩"></textarea>
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-section">
+                <div class="form-section-title"><strong>能力证据</strong><span>写清任务、行动、结果，避免只列名词</span></div>
+                <div class="form-grid">
+                  <label class="field span-2">
+                    <span>技能与工具</span>
+                    <textarea id="skills" name="skills" rows="3" required placeholder="例如：C++、Python、Linux；能够完成性能分析与自动化测试"></textarea>
+                  </label>
+                  <label class="field span-2">
+                    <span>项目经历</span>
+                    <textarea id="projects" name="projects" rows="5" required placeholder="每个项目写明名称、你的职责、技术方案和可核验结果"></textarea>
+                  </label>
+                  <label class="field span-2">
+                    <span>实习 / 社团 / 团队经历</span>
+                    <textarea id="experience" name="experience" rows="4" placeholder="没有实习也可填写课程团队、实验室或开源协作"></textarea>
+                  </label>
+                  <label class="field span-2">
+                    <span>竞赛、证书与其他成果</span>
+                    <textarea id="achievements" name="achievements" rows="3" placeholder="奖项、排名、论文、专利、证书或公开作品链接"></textarea>
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-error" id="formError" role="alert" hidden></div>
+              <div class="builder-actions">
+                <button class="button primary generate-button" id="generateResume" type="submit">用 AI 生成简历</button>
+                <button class="button secondary" id="localDraft" type="button">先看本地草稿</button>
+                <span class="generation-status" id="generationStatus" aria-live="polite">尚未生成</span>
+              </div>
+            </form>
+          </div>
+
+          <aside class="resume-output" aria-label="简历预览">
+            <div class="preview-toolbar">
+              <div><strong>实时预览</strong><span id="templateLabel">技术标准模板</span></div>
+              <div class="preview-actions">
+                <button id="copyResume" type="button" disabled>复制文本</button>
+                <button id="downloadResume" type="button" disabled>下载 HTML</button>
+                <button id="printResume" type="button" disabled>打印 PDF</button>
+              </div>
+            </div>
+            <div class="resume-paper template-technical" id="resumePreview" aria-live="polite">
+              <div class="resume-empty">
+                <strong>你的简历会显示在这里</strong>
+                <p>先填写左侧信息。可以生成不联网的结构化草稿，也可以接入 AI 完成岗位定制。</p>
+              </div>
+            </div>
+          </aside>
+        </div>
       </section>
 
       <section class="section method-section" id="method">

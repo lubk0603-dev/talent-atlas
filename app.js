@@ -139,6 +139,7 @@ function renderProfile(role) {
         <div class="recommend-item"><strong>建议项目</strong><p>${role.projects}</p></div>
         <div class="recommend-item"><strong>发展建议</strong><p>${role.advice}</p></div>
         <a class="source-link" href="${role.source}" target="_blank" rel="noreferrer">查看企业招聘来源 ↗</a>
+        <button class="profile-resume-link" type="button" data-resume-role="${role.id}">用这个岗位生成简历</button>
       </div>
     </div>`;
 }
@@ -149,6 +150,520 @@ function renderMatrix() {
     <thead><tr><th scope="col">岗位</th>${dimensions.map(d => `<th scope="col">${d}</th>`).join("")}</tr></thead>
     <tbody>${ordered.map(role => `<tr><td><span class="matrix-company">${role.company}</span><strong>${role.title}</strong></td>${role.scores.map((score, index) => `<td class="score-cell"><span class="score-${score}" aria-label="${dimensions[index]} ${score} 级">${score}</span></td>`).join("")}</tr>`).join("")}</tbody>`;
 }
+
+const templateNames = {
+  technical: "技术标准模板",
+  project: "项目优先模板",
+  campus: "校园成长模板"
+};
+
+const sampleResume = {
+  candidateName: "林知远（虚构范例）",
+  contact: "138****5274 | linzhiyuan@example.com | github.com/lin-zhiyuan",
+  headline: "EDA 算法工程师方向",
+  summary: "计算机科学与技术本科生，具备 C++ 算法实现与 Linux 开发基础，能够围绕问题建模、方案实现和实验验证整理项目证据。",
+  skills: ["C++", "Python", "Linux", "数据结构与算法", "图论", "性能分析"],
+  education: [{
+    title: "计算机科学与技术 本科",
+    organization: "福州大学",
+    period: "2023-2027",
+    bullets: ["核心课程：数据结构、算法设计、操作系统、离散数学", "持续整理课程项目代码、实验记录与复盘文档"]
+  }],
+  projects: [{
+    title: "迷你布局优化工具",
+    organization: "课程项目",
+    period: "2026.03-2026.06",
+    bullets: ["使用 C++ 完成图数据建模、启发式算法实现与命令行工具封装", "设计公开样例实验，比较不同策略的运行时间与解质量", "编写使用说明和复现实验脚本，明确个人负责模块与技术取舍"]
+  }, {
+    title: "算法练习与可视化笔记",
+    organization: "个人项目",
+    period: "持续维护",
+    bullets: ["整理图搜索、最短路径和组合优化问题的实现与复杂度分析", "为典型样例补充测试用例、结果截图和错误复盘"]
+  }],
+  experience: [{
+    title: "程序设计学习小组",
+    organization: "项目成员",
+    period: "2025-2026",
+    bullets: ["参与代码互审与问题讲解，将常见错误整理为共享检查清单", "协作维护练习仓库，统一提交说明与测试规范"]
+  }],
+  achievements: ["公开代码仓库与项目说明文档", "本范例内容为虚构示意，请勿直接复制投递"]
+};
+
+let activeTemplate = "technical";
+let generatedResume = null;
+
+const aiProviderPresets = {
+  openai: {
+    endpoint: "https://api.openai.com/v1",
+    note: "使用 OpenAI API Key，默认选择兼顾速度与成本的模型。",
+    models: [
+      { id: "gpt-5-mini", label: "GPT-5 mini · 快速经济" },
+      { id: "gpt-5.2", label: "GPT-5.2 · 高质量" },
+      { id: "gpt-4.1-mini", label: "GPT-4.1 mini · 兼容稳定" }
+    ]
+  },
+  gemini: {
+    endpoint: "https://generativelanguage.googleapis.com/v1beta/openai",
+    note: "使用 Google AI Studio 的 Gemini API Key。",
+    models: [
+      { id: "gemini-3.5-flash", label: "Gemini 3.5 Flash · 快速通用" }
+    ]
+  },
+  deepseek: {
+    endpoint: "https://api.deepseek.com",
+    note: "使用 DeepSeek 开放平台 API Key。",
+    models: [
+      { id: "deepseek-v4-flash", label: "DeepSeek V4 Flash · 快速经济" },
+      { id: "deepseek-v4-pro", label: "DeepSeek V4 Pro · 复杂任务" }
+    ]
+  },
+  qwen: {
+    endpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    note: "默认使用阿里云百炼北京地域，API Key 需与地域匹配。",
+    models: [
+      { id: "qwen-plus", label: "Qwen Plus · 通用推荐" },
+      { id: "qwen3.7-plus", label: "Qwen 3.7 Plus · 新版通用" },
+      { id: "qwen3.7-max", label: "Qwen 3.7 Max · 高质量" }
+    ]
+  },
+  kimi: {
+    endpoint: "https://api.moonshot.cn/v1",
+    note: "使用 Kimi 开放平台 API Key。",
+    models: [
+      { id: "kimi-k3", label: "Kimi K3 · 旗舰通用" },
+      { id: "kimi-k2.6", label: "Kimi K2.6 · 稳定通用" }
+    ]
+  },
+  zhipu: {
+    endpoint: "https://open.bigmodel.cn/api/paas/v4",
+    note: "使用智谱 AI 开放平台 API Key。",
+    models: [
+      { id: "glm-5.1", label: "GLM-5.1 · 旗舰通用" },
+      { id: "glm-4.7-flash", label: "GLM-4.7 Flash · 快速经济" },
+      { id: "glm-4.7", label: "GLM-4.7 · 稳定通用" }
+    ]
+  },
+  custom: {
+    endpoint: "",
+    note: "填写支持 OpenAI Chat Completions 格式的服务地址和模型 ID。",
+    models: []
+  }
+};
+
+const resumeForm = document.querySelector("#resumeForm");
+const targetRole = document.querySelector("#targetRole");
+const targetCompany = document.querySelector("#targetCompany");
+const templatePicker = document.querySelector(".template-picker");
+const resumePreview = document.querySelector("#resumePreview");
+const generationStatus = document.querySelector("#generationStatus");
+const formError = document.querySelector("#formError");
+const generateButton = document.querySelector("#generateResume");
+const aiProvider = document.querySelector("#aiProvider");
+const aiEndpoint = document.querySelector("#aiEndpoint");
+const aiKey = document.querySelector("#aiKey");
+const aiModel = document.querySelector("#aiModel");
+const customModel = document.querySelector("#customModel");
+const providerHint = document.querySelector("#providerHint");
+const configState = document.querySelector("#configState");
+const outputButtons = ["copyResume", "downloadResume", "printResume"].map(id => document.querySelector(`#${id}`));
+
+function escapeHTML(value = "") {
+  return String(value).replace(/[&<>'"]/g, character => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;"
+  })[character]);
+}
+
+function splitItems(value = "") {
+  return String(value).split(/[、，,；;\n]+/).map(item => item.trim()).filter(Boolean);
+}
+
+function splitBlocks(value = "", fallbackTitle = "相关经历") {
+  return String(value).split(/\n\s*\n/).map((block, index) => {
+    const lines = block.split("\n").map(line => line.replace(/^[-•*]\s*/, "").trim()).filter(Boolean);
+    if (!lines.length) return null;
+    return {
+      title: lines.length > 1 ? lines[0] : `${fallbackTitle}${index ? ` ${index + 1}` : ""}`,
+      organization: "",
+      period: "",
+      bullets: lines.length > 1 ? lines.slice(1) : lines
+    };
+  }).filter(Boolean);
+}
+
+function collectResumeData() {
+  return Object.fromEntries(new FormData(resumeForm).entries());
+}
+
+function roleContext(roleId) {
+  const role = roles.find(item => item.id === roleId);
+  if (!role) return null;
+  return {
+    company: role.company,
+    title: role.title,
+    summary: role.summary,
+    skills: role.skills,
+    evidence: role.evidence
+  };
+}
+
+function setFormError(message = "") {
+  formError.textContent = message;
+  formError.hidden = !message;
+}
+
+function validateResumeForm() {
+  const requiredFields = [...resumeForm.querySelectorAll("[required]")];
+  requiredFields.forEach(field => field.removeAttribute("aria-invalid"));
+  const invalid = requiredFields.filter(field => !field.value.trim());
+  if (!invalid.length) {
+    setFormError();
+    return true;
+  }
+  invalid.forEach(field => field.setAttribute("aria-invalid", "true"));
+  setFormError("请先填写目标岗位、姓名、联系方式、教育经历、技能和项目经历。");
+  invalid[0].focus();
+  return false;
+}
+
+function getSelectedModel() {
+  return aiModel.value === "custom" ? customModel.value.trim() : aiModel.value.trim();
+}
+
+function updateCustomModelField() {
+  const isCustom = aiModel.value === "custom";
+  customModel.hidden = !isCustom;
+  customModel.setAttribute("aria-hidden", String(!isCustom));
+}
+
+function applyProviderPreset(providerId, preferredModel = "", endpointOverride = null) {
+  const preset = aiProviderPresets[providerId] || aiProviderPresets.custom;
+  const modelOptions = preset.models.map(model => `<option value="${model.id}">${model.label}</option>`).join("");
+  aiModel.innerHTML = `${modelOptions}<option value="custom">自定义模型 ID</option>`;
+
+  const hasPreferredModel = preset.models.some(model => model.id === preferredModel);
+  if (hasPreferredModel) {
+    aiModel.value = preferredModel;
+    customModel.value = "";
+  } else if (preferredModel) {
+    aiModel.value = "custom";
+    customModel.value = preferredModel;
+  } else if (preset.models.length) {
+    aiModel.value = preset.models[0].id;
+    customModel.value = "";
+  } else {
+    aiModel.value = "custom";
+    customModel.value = "";
+  }
+
+  aiEndpoint.value = endpointOverride === null ? preset.endpoint : endpointOverride;
+  providerHint.textContent = preset.note;
+  updateCustomModelField();
+  updateConfigState();
+}
+
+function saveAIPreference(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch (error) {
+    console.info("无法保存 AI 接口偏好。", error);
+  }
+}
+
+function updateConfigState() {
+  const ready = aiEndpoint.value.trim() && aiKey.value.trim() && getSelectedModel();
+  configState.textContent = ready ? "已就绪" : "待配置";
+  configState.classList.toggle("ready", Boolean(ready));
+}
+
+function normalizeEndpoint(value) {
+  const endpoint = value.trim().replace(/\/+$/, "");
+  return endpoint.endsWith("/chat/completions") ? endpoint : `${endpoint}/chat/completions`;
+}
+
+function localResume(data) {
+  const selectedRole = roleContext(data.targetRole);
+  const roleTitle = selectedRole?.title || targetRole.options[targetRole.selectedIndex]?.text || "目标岗位";
+  return {
+    candidateName: data.candidateName,
+    contact: data.contact,
+    headline: `${roleTitle}候选人`,
+    summary: `面向${data.targetCompany ? `${data.targetCompany}的` : ""}${roleTitle}岗位。以下内容根据本人填写的信息整理，投递前请逐项核验。`,
+    skills: splitItems(data.skills),
+    education: [{ title: "教育经历", organization: "", period: "", bullets: splitItems(data.education) }],
+    projects: splitBlocks(data.projects, "项目经历"),
+    experience: splitBlocks(data.experience, "实践经历"),
+    achievements: splitItems(data.achievements)
+  };
+}
+
+function normalizeEntries(value, fallbackTitle) {
+  if (!Array.isArray(value)) return [];
+  return value.map((entry, index) => {
+    if (typeof entry === "string") return { title: `${fallbackTitle}${index ? ` ${index + 1}` : ""}`, organization: "", period: "", bullets: [entry] };
+    return {
+      title: entry?.title || fallbackTitle,
+      organization: entry?.organization || "",
+      period: entry?.period || "",
+      bullets: Array.isArray(entry?.bullets) ? entry.bullets.filter(Boolean) : splitItems(entry?.bullets || entry?.details || "")
+    };
+  }).filter(entry => entry.title || entry.bullets.length);
+}
+
+function normalizeAIResume(value, source) {
+  return {
+    candidateName: source.candidateName,
+    contact: source.contact,
+    headline: value?.headline || `${targetRole.options[targetRole.selectedIndex]?.text || "目标岗位"}候选人`,
+    summary: value?.summary || "",
+    skills: Array.isArray(value?.skills) ? value.skills.filter(Boolean) : splitItems(value?.skills || source.skills),
+    education: normalizeEntries(value?.education, "教育经历"),
+    projects: normalizeEntries(value?.projects, "项目经历"),
+    experience: normalizeEntries(value?.experience, "实践经历"),
+    achievements: Array.isArray(value?.achievements) ? value.achievements.filter(Boolean) : splitItems(value?.achievements || source.achievements)
+  };
+}
+
+function parseAIContent(content) {
+  const cleaned = String(content || "").trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  if (start < 0 || end < start) throw new Error("AI 返回的内容不是可识别的简历数据，请重试。");
+  return JSON.parse(cleaned.slice(start, end + 1));
+}
+
+function entrySection(title, entries, className = "") {
+  if (!entries.length) return "";
+  return `<section class="resume-doc-section ${className}"><h4>${escapeHTML(title)}</h4>${entries.map(entry => `
+    <article class="resume-entry">
+      <div class="resume-entry-head"><strong>${escapeHTML([entry.title, entry.organization].filter(Boolean).join(" | "))}</strong><span>${escapeHTML(entry.period)}</span></div>
+      ${entry.bullets.length ? `<ul>${entry.bullets.map(item => `<li>${escapeHTML(item)}</li>`).join("")}</ul>` : ""}
+    </article>`).join("")}</section>`;
+}
+
+function skillSection(skills) {
+  if (!skills.length) return "";
+  return `<section class="resume-doc-section resume-section-skills"><h4>技能与工具</h4><div class="resume-skills">${skills.map(skill => `<span>${escapeHTML(skill)}</span>`).join("")}</div></section>`;
+}
+
+function achievementSection(items) {
+  if (!items.length) return "";
+  return `<section class="resume-doc-section resume-section-achievements"><h4>成果与荣誉</h4><p>${items.map(escapeHTML).join("<br>")}</p></section>`;
+}
+
+function renderResume() {
+  if (!generatedResume) return;
+  const resume = generatedResume;
+  const education = entrySection("教育经历", resume.education, "resume-section-education");
+  const projects = entrySection("项目经历", resume.projects, "resume-section-projects");
+  const experience = entrySection("实践经历", resume.experience, "resume-section-experience");
+  const skills = skillSection(resume.skills);
+  const achievements = achievementSection(resume.achievements);
+  const mainSections = activeTemplate === "project"
+    ? [projects, experience, skills, education, achievements]
+    : activeTemplate === "campus"
+      ? [education, projects, experience]
+      : [skills, projects, experience, education, achievements];
+  const sidebar = activeTemplate === "campus" ? `<aside class="resume-sidebar">${skills}${achievements}</aside>` : "";
+  resumePreview.className = `resume-paper template-${activeTemplate}`;
+  resumePreview.innerHTML = `<article class="resume-document">
+    <header class="resume-doc-header">
+      <div><h3>${escapeHTML(resume.candidateName)}</h3><p>${escapeHTML(resume.headline)}</p></div>
+      <p class="resume-contact">${escapeHTML(resume.contact)}</p>
+    </header>
+    ${resume.summary ? `<p class="resume-summary">${escapeHTML(resume.summary)}</p>` : ""}
+    ${sidebar}
+    <div class="resume-doc-body">${mainSections.join("")}</div>
+  </article>`;
+  outputButtons.forEach(button => button.disabled = false);
+}
+
+function setGenerationState(message, state = "") {
+  generationStatus.textContent = message;
+  generationStatus.className = `generation-status ${state}`.trim();
+}
+
+async function generateWithAI(data) {
+  const selectedModel = getSelectedModel();
+  if (!aiEndpoint.value.trim() || !aiKey.value.trim() || !selectedModel) {
+    document.querySelector(".ai-config").open = true;
+    setFormError("请先选择 AI 服务商和模型，并填写接口地址与 API 密钥，或使用本地草稿。");
+    setGenerationState("AI 尚未配置", "error");
+    const modelInput = aiModel.value === "custom" ? customModel : aiModel;
+    [aiEndpoint, aiKey, modelInput].find(input => input === customModel ? !selectedModel : !input.value.trim())?.focus();
+    return;
+  }
+  setFormError();
+  generateButton.disabled = true;
+  generateButton.classList.add("loading");
+  setGenerationState("正在分析岗位与经历");
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 60000);
+  const promptData = { ...data, targetRole: targetRole.options[targetRole.selectedIndex]?.text || data.targetRole, roleResearch: roleContext(data.targetRole), template: templateNames[activeTemplate] };
+  const systemPrompt = `你是一名严谨的中文技术招聘简历编辑。只使用用户提供的事实，不补造公司、时间、职责、数据、奖项或技能。没有量化数据时不要自行添加数字。围绕目标岗位选择关键词，使用简洁、可核验的动作表达，控制在一页简历的信息密度。只返回一个合法 JSON 对象，不要使用 Markdown。结构必须是：{"headline":"","summary":"","skills":[""],"education":[{"title":"","organization":"","period":"","bullets":[""]}],"projects":[同结构],"experience":[同结构],"achievements":[""]}。空缺板块使用空数组。`;
+  try {
+    const response = await fetch(normalizeEndpoint(aiEndpoint.value), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${aiKey.value.trim()}` },
+      body: JSON.stringify({
+        model: selectedModel,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: `请根据以下真实信息生成岗位定制简历：\n${JSON.stringify(promptData)}` }
+        ]
+      }),
+      signal: controller.signal
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload?.error?.message || `接口请求失败，状态码 ${response.status}`);
+    const content = payload?.choices?.[0]?.message?.content;
+    if (!content) throw new Error("接口未返回可用内容，请检查模型名称与接口兼容性。");
+    generatedResume = normalizeAIResume(parseAIContent(content), data);
+    renderResume();
+    setGenerationState("AI 简历已生成，请逐项核验", "success");
+  } catch (error) {
+    const message = error.name === "AbortError"
+      ? "请求超时，请稍后重试。"
+      : error instanceof TypeError
+        ? "无法连接接口。请检查地址、网络和服务是否允许浏览器跨域请求。"
+        : error.message;
+    setGenerationState("生成失败", "error");
+    setFormError(message);
+  } finally {
+    clearTimeout(timeout);
+    generateButton.disabled = false;
+    generateButton.classList.remove("loading");
+  }
+}
+
+targetRole.innerHTML = `<option value="">请选择目标岗位</option>${roles.map(role => `<option value="${role.id}">${role.company} | ${role.title}</option>`).join("")}<option value="custom">其他岗位</option>`;
+
+try {
+  const savedProvider = localStorage.getItem("resume-ai-provider") || "openai";
+  const savedEndpoint = localStorage.getItem("resume-ai-endpoint");
+  const savedModel = localStorage.getItem("resume-ai-model") || "";
+  aiProvider.value = aiProviderPresets[savedProvider] ? savedProvider : "openai";
+  applyProviderPreset(aiProvider.value, savedModel, savedEndpoint || null);
+} catch (error) {
+  console.info("浏览器未开放本地偏好存储。", error);
+  applyProviderPreset("openai");
+}
+
+templatePicker.addEventListener("click", event => {
+  const button = event.target.closest("[data-template]");
+  if (!button) return;
+  activeTemplate = button.dataset.template;
+  templatePicker.querySelectorAll("[data-template]").forEach(option => {
+    const selected = option === button;
+    option.classList.toggle("active", selected);
+    option.setAttribute("aria-checked", String(selected));
+  });
+  document.querySelector("#templateLabel").textContent = templateNames[activeTemplate];
+  resumePreview.className = `resume-paper template-${activeTemplate}`;
+  renderResume();
+});
+
+targetRole.addEventListener("change", () => {
+  const role = roleContext(targetRole.value);
+  if (role) targetCompany.value = role.company;
+});
+
+aiProvider.addEventListener("change", () => {
+  applyProviderPreset(aiProvider.value);
+  saveAIPreference("resume-ai-provider", aiProvider.value);
+  saveAIPreference("resume-ai-endpoint", aiEndpoint.value.trim());
+  saveAIPreference("resume-ai-model", getSelectedModel());
+});
+
+aiModel.addEventListener("change", () => {
+  updateCustomModelField();
+  updateConfigState();
+  saveAIPreference("resume-ai-model", getSelectedModel());
+  if (aiModel.value === "custom") customModel.focus();
+});
+
+customModel.addEventListener("input", () => {
+  updateConfigState();
+  saveAIPreference("resume-ai-model", customModel.value.trim());
+});
+
+aiEndpoint.addEventListener("input", updateConfigState);
+aiEndpoint.addEventListener("change", () => saveAIPreference("resume-ai-endpoint", aiEndpoint.value.trim()));
+aiKey.addEventListener("input", updateConfigState);
+
+resumeForm.addEventListener("input", event => {
+  if (event.target.matches("[required]") && event.target.value.trim()) event.target.removeAttribute("aria-invalid");
+});
+
+resumeForm.addEventListener("submit", event => {
+  event.preventDefault();
+  if (!validateResumeForm()) return;
+  generateWithAI(collectResumeData());
+});
+
+document.querySelector("#localDraft").addEventListener("click", () => {
+  if (!validateResumeForm()) return;
+  generatedResume = localResume(collectResumeData());
+  renderResume();
+  setGenerationState("本地草稿已生成，尚未调用 AI", "success");
+});
+
+document.querySelector("#loadSampleResume").addEventListener("click", () => {
+  activeTemplate = "technical";
+  templatePicker.querySelectorAll("[data-template]").forEach(option => {
+    const selected = option.dataset.template === activeTemplate;
+    option.classList.toggle("active", selected);
+    option.setAttribute("aria-checked", String(selected));
+  });
+  document.querySelector("#templateLabel").textContent = templateNames[activeTemplate];
+  generatedResume = JSON.parse(JSON.stringify(sampleResume));
+  renderResume();
+  setGenerationState("范例简历已载入，可参考结构后填写自己的内容", "success");
+  resumePreview.scrollIntoView({ behavior: "smooth", block: "center" });
+});
+
+profileDetail.addEventListener("click", event => {
+  const button = event.target.closest("[data-resume-role]");
+  if (!button) return;
+  targetRole.value = button.dataset.resumeRole;
+  targetRole.dispatchEvent(new Event("change"));
+  document.querySelector("#resume").scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+document.querySelector("#copyResume").addEventListener("click", async () => {
+  const text = resumePreview.innerText.trim();
+  try {
+    await navigator.clipboard.writeText(text);
+    setGenerationState("简历文本已复制", "success");
+  } catch (error) {
+    const helper = document.createElement("textarea");
+    helper.value = text;
+    document.body.appendChild(helper);
+    helper.select();
+    document.execCommand("copy");
+    helper.remove();
+    setGenerationState("简历文本已复制", "success");
+  }
+});
+
+document.querySelector("#downloadResume").addEventListener("click", () => {
+  const title = `${generatedResume.candidateName}-${generatedResume.headline}`.replace(/[\\/:*?"<>|]/g, "-");
+  const documentHTML = `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${escapeHTML(title)}</title><style>body{margin:0;background:#e9edf1;color:#1d252c;font-family:Arial,"Microsoft YaHei UI",sans-serif;line-height:1.48}.page{width:210mm;min-height:297mm;box-sizing:border-box;margin:24px auto;padding:16mm;background:white}.resume-doc-header{display:grid;grid-template-columns:1fr auto;gap:20px;padding-bottom:18px;border-bottom:2px solid #2457e6}.resume-doc-header h3{margin:0;font-size:30px}.resume-doc-header p,.resume-summary{color:#4b5964}.resume-contact{text-align:right;white-space:pre-line}.resume-doc-body{display:grid;gap:18px}.resume-doc-section h4{margin:0 0 8px;color:#2457e6;font-size:11px;letter-spacing:.09em}.resume-entry{margin-bottom:12px}.resume-entry-head{display:flex;justify-content:space-between;gap:12px}.resume-entry-head span{color:#65717b;font-size:10px}.resume-entry ul{margin:4px 0;padding-left:17px}.resume-entry li,.resume-doc-section p{font-size:10.5px}.resume-skills{display:flex;flex-wrap:wrap;gap:5px}.resume-skills span{padding:4px 7px;border-radius:5px;color:#183a9b;background:#e8edff;font-size:10px}.resume-sidebar{display:grid;gap:18px}@media print{body{background:white}.page{margin:0;box-shadow:none}}@media(max-width:800px){.page{width:auto;min-height:100vh;margin:0;padding:24px}.resume-doc-header{grid-template-columns:1fr}.resume-contact{text-align:left}}</style></head><body><main class="page">${resumePreview.innerHTML}</main></body></html>`;
+  const url = URL.createObjectURL(new Blob([documentHTML], { type: "text/html;charset=utf-8" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${title}.html`;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  setGenerationState("HTML 简历已下载", "success");
+});
+
+document.querySelector("#printResume").addEventListener("click", () => {
+  document.body.classList.add("print-resume");
+  window.print();
+});
+
+window.addEventListener("afterprint", () => document.body.classList.remove("print-resume"));
+updateConfigState();
 
 companyFilters.addEventListener("click", event => {
   const button = event.target.closest("[data-company]"); if (!button) return;
